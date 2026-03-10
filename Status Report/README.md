@@ -1,6 +1,4 @@
-## 🗂️ Projetos
-
-### 📊 Status Report — Sprint Tracker
+## 📊 Status Report — Sprint Tracker
 Painel dark mode para acompanhamento de sprints e entregas de desenvolvimento.
 
 **Funcionalidades:**
