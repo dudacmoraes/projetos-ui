@@ -9,5 +9,3 @@ Painel dark mode para acompanhamento de sprints e entregas de desenvolvimento.
 - Pílulas de status com efeito neon animado (In Progress, Ready for Testing, Committed)
 
 **Tecnologias:** `HTML` `CSS` `JavaScript`
-
----
