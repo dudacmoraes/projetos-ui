@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Status Report - Sprint Tracker</title>
+
+<style>
+:root {
+    /* Paleta de cores moderna */
+    --development: #00d4ff;  /* Ciano Neon */
+    --qa: #ff6ec4;           /* Rosa Neon */
+    --success: #39ff14;  /* Verde Neon */
+    --warning: #ffce00;  /* Amarelo Neon */
+    --danger: #ff0000;   /* Vermelho Neon */
+    --bg-color: #0a0b10; /* Fundo */
+    --card-bg: #161b22;  /* Fundo dos cards */
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-color);
+    margin: 0;
+    padding: 40px;
+    color: #f0f4f7;
+}
+
+h1 {
+    position: relative;
+    display: inline-block;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    letter-spacing: -1px;
+}
+
+h2 {
+    margin-top: 40px;
+    color: var(--success);
+    text-shadow: 0 0 5px rgba(57, 255, 20, 0.3);
+}
+
+.cards {
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding:20px;
+    border-radius:10px;
+    min-width:200px; 
+    flex: 1;
+    transition: 0.3s;
+}
+
+.card:hover {
+    border-color: var(--success);
+    box-shadow: 0 0 20px rgba(57,255,20,0.2);
+    transform: translateY(-5px);
+}
+
+.card strong {
+    font-size: 32px;
+    display: block;
+    margin-top: 5px;
+    text-shadow: 0 0 8px currentColor;
+}
+
+.card span {
+    font-size: 13px;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#searchInput {
+    width: 100%;
+    padding: 12px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: 0.3s;
+    box-sizing: border-box; /* Garante que o padding não aumente o tamanho */
+    margin-top: 10px;
+}
+
+#searchInput:focus {
+    border-color: var(--success);
+    box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+}
+
+.ok{color:#65ff46;}    /* Verde */
+.warn{color:#ed6c02;}  /* Laranja */
+.dev{color:#1976d2;}   /* Azul */
+.gray{color:#757575;}  /* Cinza */
+
+.table-wrapper {
+    width: 100%;
+    margin-top: 25px;
+    background: var(--card-bg);
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    overflow: hidden; /* Garante que o brilho e as bordas não escapem */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* --- TABELA --- */
+table{
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+}
+
+th {
+    background:#0d1117;
+    color: var(--success);
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 16px 20px;
+    border-bottom: 2px solid var(--success);
+    text-align: left;
+}
+
+td {
+    padding: 14px 20px;
+    border-bottom: 1px solid #30363d;
+    color: #c9d1d9;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+tr:hover td {
+    background: rgba(57, 255, 20, 0.03);
+    color: #fff;
+    transition: 0.2s;
+}
+
+@keyframes neon-pulse {
+    0% {
+        box-shadow: inset 0 0 5px var(--development), 0 0 5px var(--development);
+        opacity: 1;
+    }
+    50% {
+        box-shadow: inset 0 0 10px var(--development), 0 0 20px var(--development);
+        opacity: 0.8;
+    }
+    100% {
+        box-shadow: inset 0 0 5px var(--development), 0 0 5px var(--development);
+        opacity: 1;
+    }
+}
+
+.col-id { width: 80px; color: var(--success); font-family: monospace; font-weight: bold;}
+.col-date { width: 110px; text-align: right; color: #8b949e}
+.col-status { width: 180px; text-align: center; }
+
+/* O formato da pílula */
+.status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    background: transparent;
+    border: 1px solid currentColor;
+    box-shadow: inset 0 0 5px currentColor, 0 0 10px currentColor;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    box-sizing: border-box;
+    vertical-align: middle;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* As cores de fundo e texto */
+.st-progress { color: var(--development); animation: neon-pulse 2s infinite ease-in-out; }
+.st-testing  { color: var(--qa); }
+.st-committed{ color: var(--warning); }
+
+</style>
+</head>
+
+<body>
+
+<h1>Status Report – Acompanhamento de Sprints</h1>
+<p style="color: #8b949e">Visão geral das atividades e entregas previstas.</p>
+
+<div class="cards">
+    <div class="card">
+        <span>Total de Itens</span>
+        <strong style="color: white;">11</strong>
+    </div>
+
+    <div class="card card-qa">
+        <span>Pronto p/ Testes (QA)</span>
+        <strong style="color: var(--qa);">4</strong>
+    </div>
+
+    <div class="card card-dev">
+        <span>Em desenvolvimento</span>
+        <strong style="color: var(--development);">5</strong>
+    </div>
+
+    <div class="card card-backlog">
+        <span>Backlog / Committed</span>
+        <strong style="color: var(--warning);">2</strong>
+    </div>
+</div>
+
+<h2>Detalhamento das Atividades</h2>
+
+<div style="margin-bottom: 20px;">
+    <input type="text" id="searchInput" onkeyup="filtrarTabela()" placeholder="Digite para filtrar...">
+</div>
+
+<div class="table-wrapper">
+    <table>
+        <thread>
+            <tr>
+                <th class="col-id">ID</th>
+                <th>Atividade / Título</th>
+                <th>Responsável</th>
+                <th class="col-status">Status</th>
+                <th>Retorno QA</th>
+                <th class="col-date">Target Date</th>
+            </tr>
+        </thread>
+        <tbody>
+            <tr>
+                <td class="col-id">10001</td>
+                <td>Treinamentos (Lançamento da Instrução de Trabalho)</td>
+                <td>Dev A</td>
+                <td class="col-status"><span class="status st-committed">Committed</span></td>
+                <td>QA</td>
+                <td class="col-date">02/12/2025</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10002</td>
+                <td>Emissão de Ficha de Cadastro do Colaborador (PDF)</td>
+                <td>Dev B</td>
+                <td class="col-status"><span class="status st-progress">In Progress</span></td>
+                <td>QA</td>
+                <td class="col-date">08/12/2025</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10003</td>
+                <td>Solicitações: Status com responsável e disparo de e-mail</td>
+                <td>Dev C</td>
+                <td class="col-status"><span class="status st-testing">Ready for Testing</span></td>
+                <td>-</td>
+                <td class="col-date">16/12/2025</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10004</td>
+                <td>Solicitações: Visualização por Equipe/Departamento</td>
+                <td>Dev B</td>
+                <td class="col-status"><span class="status st-progress">In Progress</span></td>
+                <td>QA</td>
+                <td class="col-date">23/12/2025</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10005</td>
+                <td>Ajuste de Segmentação: Lógica para Cargo e Perfil</td>
+                <td>Dev C</td>
+                <td class="col-status"><span class="status st-testing">Ready for Testing</span></td>
+                <td>QA</td>
+                <td class="col-date">23/12/2025</td>
+            </tr>
+
+            <tr>
+                <td class="col-id"  >10006</td>
+                <td>Implementar Modal do Colaborador (Portal e Academy)</td>
+                <td>Dev A</td>
+                <td class="col-status"><span class="status st-committed">Committed</span></td>
+                <td>QA</td>
+                <td class="col-date">15/01/2026</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10007</td>
+                <td>Funil de Vendas</td>
+                <td>Dev B</td>
+                <td class="col-status"><span class="status st-progress">In Progress</span></td>
+                <td>QA</td>
+                <td class="col-date">20/01/2026</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10008</td>
+                <td>Criação de Visões Comerciais</td>
+                <td>Dev C</td>
+                <td class="col-status"><span class="status st-testing">Ready for Testing</span></td>
+                <td>QA</td>
+                <td class="col-date">22/01/2026</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10009</td>
+                <td>Colaboradores e Clientes em Campanhas</td>
+                <td>Dev C</td>
+                <td class="col-status"><span class="status st-testing">Ready for Testing</span></td>
+                <td>QA</td>
+                <td class="col-date">26/01/2026</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10010</td>
+                <td>Melhorias no Layout de Funis</td>
+                <td>Dev B</td>
+                <td class="col-status"><span class="status st-progress">In Progress</span></td>
+                <td>-</td>
+                <td class="col-date">29/01/2026</td>
+            </tr>
+
+            <tr>
+                <td class="col-id">10011</td>
+                <td>Leads</td>
+                <td>Dev B</td>
+                <td class="col-status"><span class="status st-progress">In Progress</span></td>
+                <td>-</td>
+                <td class="col-date">29/01/2026</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function filtrarTabela() {
+        // 1. Pega o que o usuário digitou e transforma em MAIÚSCULAS (pra não diferenciar a de A)
+        var input = document.getElementById("searchInput");
+        var termo = input.value.toUpperCase();
+
+        // 2. Pega a tabela e todas as linhas (tr)
+        var tabela = document.querySelector("table");
+        var linhas = tabela.getElementsByTagName("tr");
+
+        // 3. Passa linha por linha (começando da 1 pra pular o cabeçalho)
+        for (var i = 1; i < linhas.length; i++) {
+            var linha = linhas[i];
+            // Pega todo o texto que tem dentro daquela linha
+            var textoDaLinha = linha.textContent || linha.innerText;
+
+            // 4. Se o termo digitado existir dentro do texto da linha...
+            if (textoDaLinha.toUpperCase().indexOf(termo) > -1) {
+                linha.style.display = ""; // Mostra a linha
+            } else {
+                linha.style.display = "none"; // Esconde a linha
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
