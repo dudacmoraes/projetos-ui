@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Status Report — Projeto BI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --bg-body: #0f0f0f;
+        --bg-card: #1a1a1a;
+        --brand-red: #E60012;
+        --text-main: #ffffff;
+        --text-muted: #a0a0a0;
+        --border-color: #333333;
+        
+        /* Status Colors */
+        --st-done: #15f700;
+        --st-progress: #E60012;
+        --st-todo: #444444;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        margin: 0;
+        padding: 40px;
+    }
+
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 40px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 20px;
+        gap: 20px;
+        min-height: 100px;
+    }
+
+    .project-info h1 { font-size: 28px; margin: 0; letter-spacing: -0.5px; }
+    .project-info p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px; }
+
+    .logo-placeholder {
+        position: absolute;
+        right: 40px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .logo-placeholder img {
+        height: 200px;
+        width: auto;
+        object-fit: contain;
+    }
+
+    .alert-box {
+        background: rgba(230, 0, 18, 0.1);
+        border-left: 4px solid var(--brand-red);
+        padding: 15px 20px;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 40px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    .alert-box strong { color: var(--brand-red); }
+
+    .gantt-container {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow-x: auto; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .gantt-inner {
+        min-width: 1000px; 
+    }
+
+    .gantt-header, .gantt-row {
+        display: grid;
+        grid-template-columns: 250px repeat(8, 1fr); 
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .gantt-header {
+        background: #252525;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        text-align: center;
+        height: 50px;
+    }
+
+    .gantt-header div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        border-right: 1px solid var(--border-color);
+    }
+
+    .gantt-header div:first-child {
+        justify-content: flex-start;
+        padding-left: 20px;
+        color: var(--text-main);
+        
+        position: sticky;
+        left: 0;
+        background: #252525;
+        z-index: 5;
+        border-right: 2px solid var(--border-color);
+    }
+
+    .gantt-row {
+        transition: background 0.2s;
+        height: 60px;
+    }
+    .gantt-row:hover { background: #2a2a2a; }
+    .gantt-row:last-child { border-bottom: none; }
+
+    .task-name {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding: 0 20px;
+        font-size: 14px;
+        font-weight: 500;
+        
+        position: sticky;
+        left: 0;
+        background: var(--bg-card);
+        z-index: 2;
+        border-right: 2px solid var(--border-color);
+    }
+    
+    .grid-cell {
+        border-right: 1px solid var(--border-color);
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* PINS */
+    .pin {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        position: relative;
+        z-index: 2;
+    }
+    .pin::after {
+        content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 20px; height: 20px; background: inherit; opacity: 0.3; border-radius: 50%; z-index: 1;
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+        100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+    }
+    .p-done { background: var(--st-done); }
+    .p-progress { background: var(--st-progress); }
+    .p-todo { background: var(--st-todo); animation: none; }
+    .p-todo::after { display: none; }
+
+    /* Legenda */
+    .legend {
+        display: flex; gap: 30px; margin-top: 20px; justify-content: flex-end; flex-wrap: wrap;
+    }
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* === RESPONSIVIDADE (MOBILE) === */
+    @media (max-width: 768px) {
+        body { padding: 20px; }
+
+        .header-container {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        /* Ajuste Mobile: 100px para não estourar a tela */
+        .logo-placeholder img { height: 100px; } 
+
+        .gantt-header div:first-child,
+        .task-name {
+            position: static; 
+            border-right: 1px solid var(--border-color);
+            background: transparent;
+        }
+        
+        .gantt-inner { min-width: 800px; }
+    }
+
+</style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div class="project-info">
+            <h1>Projeto BI</h1>
+            <p>Cronograma Executivo | Status Report</p>
+        </div>
+        
+        <div class="logo-placeholder">
+            <img src="https://placehold.co/200x80/E60012/white?text=CLIENTE" 
+                 alt="Logo do Cliente" 
+                 style="filter: brightness(0) invert(1);"> 
+        </div>
+    </div>
+
+    <div class="alert-box">
+        <span style="font-size: 20px;">🔒</span>
+        <div>
+            <strong>Ponto de Atenção:</strong> 
+            Necessário liberação de acessos aos bancos de dados.
+        </div>
+    </div>
+
+    <div class="gantt-container">
+        <div class="gantt-inner">
+            
+            <div class="gantt-header">
+                <div>Atividade / Marco</div>
+                
+                <div>01-07 FEV</div>
+                <div>08-14 FEV</div>
+                <div>15-21 FEV</div>
+                <div>22-28 FEV</div>
+                
+                <div>01-07 MAR</div>
+                <div>08-14 MAR</div>
+                <div>15-21 MAR</div>
+                <div>22-31 MAR</div>
+            </div>
+
+            <div class="gantt-row">
+                <div class="task-name">Kickoff e Diagnóstico</div>
+                <div class="grid-cell"><div class="pin p-done" title="Concluído"></div></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            </div>
+
+            <div class="gantt-row">
+                <div class="task-name">Desenv. Protótipo</div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"><div class="pin p-progress" title="Em andamento"></div></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            </div>
+
+            <div class="gantt-row">
+                <div class="task-name">Apres. Protótipo</div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"><div class="pin p-todo" title="Previsto"></div></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            </div>
+
+            <div class="gantt-row">
+                <div class="task-name">Ligação Base de Dados</div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"><div class="pin p-todo" title="Previsto"></div></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+            </div>
+
+            <div class="gantt-row">
+                <div class="task-name">Homologação</div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div>
+                <div class="grid-cell"><div class="pin p-todo" title="Previsto"></div></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div>
+            </div>
+
+            <div class="gantt-row">
+                <div class="task-name">Entrega Final</div>
+                <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"></div><div class="grid-cell"></div>
+                <div class="grid-cell"><div class="pin p-todo" title="Previsto"></div></div>
+                <div class="grid-cell"></div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot p-done"></div> Concluído</div>
+        <div class="legend-item"><div class="legend-dot p-progress"></div> Em andamento</div>
+        <div class="legend-item"><div class="legend-dot p-todo"></div> A iniciar</div>
+    </div>
+
+</body>
+</html>
