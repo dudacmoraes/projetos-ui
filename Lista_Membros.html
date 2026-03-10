@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <title>Lista de Membros - Associação</title>
+<style>
+    :root {
+        --brand-red: #cf202e;
+        --brand-dark: #333333;
+        --bg-light: #f4f4f4;
+        --border-gray: #dddddd;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg-light);
+        margin: 0;
+        color: var(--brand-dark);
+    }
+
+    .top-bar { background: var(--brand-red); height: 40px; }
+
+    nav {
+        background: white;
+        padding: 15px 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    /* --- AJUSTE DO CABEÇALHO (LOGO + TEXTO) --- */
+    .brand-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .brand-logo {
+        height: 45px; /* Altura ajustada para o padrão oficial */
+        width: auto;
+    }
+
+    .brand-divider {
+        width: 1px;
+        height: 30px;
+        background-color: #999;
+    }
+
+    .brand-text {
+        font-weight: 700;
+        color: #444;
+        font-size: 22px;
+        white-space: nowrap;
+        line-height: 1; 
+        display: flex;
+        align-items: center;
+        margin-top: -2px; /* Ajuste óptico para centralizar com a logo */
+    }
+
+    .nav-right { font-weight: 600; color: #555; font-size: 14px; }
+
+    /* --- ESTRUTURA --- */
+    .hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                    url('https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1350&q=80');
+        background-size: cover;
+        padding: 80px 60px;
+        color: white;
+        text-align: left;
+    }
+
+    .hero h1 { font-size: 48px; margin: 0; }
+
+    .container { padding: 40px 60px; max-width: 1400px; margin: 0 auto; }
+
+    .search-wrapper { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+
+    #searchInput {
+        padding: 10px 15px;
+        border: 1px solid var(--border-gray);
+        border-radius: 4px;
+        width: 350px;
+        font-size: 14px;
+        outline: none;
+    }
+
+    .table-wrapper {
+        width: 100%;
+        margin-top: 25px;
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        overflow-x: auto; /* Garante que não quebre no celular */
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    th {
+        background: #666666;
+        color: white;
+        text-align: left;
+        padding: 15px 20px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    td { 
+        padding: 12px 20px; 
+        border-bottom: 1px solid var(--border-gray); 
+        font-size: 14px; 
+        color: #444; 
+        vertical-align: middle; 
+    }
+
+    .col-tel { white-space: nowrap; font-family: inherit; }
+
+    .member-name { color: var(--brand-red); text-decoration: none; font-weight: 600; }
+    .member-name:hover { text-decoration: underline; }
+
+    tr:hover { background: #fafafa; }
+
+    .email-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 35px;
+        height: 25px;
+        border: 2px solid var(--brand-red);
+        border-radius: 6px;
+        color: var(--brand-red);
+        text-decoration: none;
+        font-size: 18px;
+        transition: transform 0.2s;
+        background: transparent;
+    }
+
+    .email-icon:hover {
+        animation: shake-animation 0.4s ease-in-out 1;
+        background-color: rgba(207, 32, 46, 0.05);
+    }
+
+    @keyframes shake-animation {
+        0% { transform: rotate(0deg); }
+        25% { transform: rotate(5deg) translateX(2px); }
+        50% { transform: rotate(-5deg) translateX(-2px); }
+        75% { transform: rotate(5deg) translateX(2px); }
+        100% { transform: rotate(0deg); }
+    }
+
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+<nav>
+    <div class="brand-group">
+        <img src="https://placehold.co/120x45/cf202e/white?text=GRUPO+NET" alt="Logo" class="brand-logo">
+        
+        <div class="brand-divider"></div>
+        
+        <span class="brand-text">VP Referência</span>
+    </div>
+
+    <div class="nav-right">MEMBROS DO GRUPO | GALERIA</div>
+</nav>
+
+<div class="hero">
+    <h1>Lista de Membros</h1>
+</div>
+
+<div class="container">
+    <div class="search-wrapper">
+        <input type="text" id="searchInput" onkeyup="filtrar()" placeholder="Filtrar por nome, empresa ou categoria...">
+    </div>
+
+    <div class="table-wrapper">
+        <table id="tabelaMembros">
+            <thead>
+                <tr>
+                    <th>Nome dos Membros</th>
+                    <th>Empresa</th>
+                    <th>Categoria/Especialidade</th>
+                    <th>Telefone</th>
+                    <th style="text-align: center;">Enviar E-mail</th>
+                </tr>
+            </thead>
+            <tbody id="memberData">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const membros = [
+        {nome: "Ana Paula Ferreira", empresa: "Sabor & Arte Restaurante", categoria: "Comida & Bebida > Restaurante", tel: "(11) 99100-0001"},
+        {nome: "Bruno Mendes Costa", empresa: "LabExame Saúde", categoria: "Saúde & Bem-estar > Saúde (Outro)", tel: "(11) 99100-0002"},
+        {nome: "Carla Souza Lima", empresa: "Café das Fábulas", categoria: "Comida & Bebida > Comida & Bebida (Outro)", tel: "(11) 99100-0003"},
+        {nome: "Daniel Rocha Neves", empresa: "Nutri & Vida", categoria: "Saúde & Bem-estar > Nutricionista", tel: "(11) 99100-0004"},
+        {nome: "Eduardo Campos Silva", empresa: "E.C. Saúde Ltda", categoria: "Saúde & Bem-estar > Saúde (Outro)", tel: "(11) 99100-0005"},
+        {nome: "Fábio Almeida Pires", empresa: "Grupo Segur", categoria: "Segurança & Investigação > Sistemas de Segurança", tel: "(11) 99100-0006"},
+        {nome: "Gabriela Torres Melo", empresa: "FireSafe do Brasil", categoria: "Segurança & Investigação > Prevenção de Incêndio", tel: "(11) 99100-0007"},
+        {nome: "Helena Vieira Santos", empresa: "HV Advocacia", categoria: "Jurídico & Contabilidade > Jurídico (Outro)", tel: "(11) 99100-0008"},
+        {nome: "Igor Nascimento Dias", empresa: "Criativa Comunicação Visual", categoria: "Publicidade & Marketing > Comunicação Visual", tel: "(11) 99100-0009"},
+        {nome: "Juliana Martins Roque", empresa: "Ótica Clareza", categoria: "Comércio > Comércio (Outro)", tel: "(11) 99100-0010"},
+        {nome: "Kevin Lopes Barros", empresa: "TechRepair TI", categoria: "Reparo > Reparo de Computadores", tel: "(11) 99100-0011"},
+        {nome: "Laura Gomes Faria", empresa: "OdontoPrime Especialidades", categoria: "Saúde & Bem-estar > Odontologia", tel: "(11) 99100-0012"},
+        {nome: "Marcelo Teixeira Braga", empresa: "MentorTech", categoria: "Computador & Programação > Programação (Outro)", tel: "(11) 99100-0013"},
+        {nome: "Natália Cardoso Vaz", empresa: "Telecom Plus", categoria: "Telecomunicações > Telecomunicações (Outro)", tel: "(11) 99100-0014"},
+        {nome: "Otávio Rezende Cunha", empresa: "Verde Paisagismo", categoria: "Arquitetura & Engenharia > Paisagista", tel: "(11) 99100-0015"},
+        {nome: "Paula Andrade Leite", empresa: "PA & Associados Advogados", categoria: "Jurídico & Contabilidade > Direito do Trabalho", tel: "(11) 99100-0016"},
+        {nome: "Ricardo Santana Melo", empresa: "MetalFlex Esquadrias", categoria: "Comércio > Materiais de Construção", tel: "(11) 99100-0017"},
+        {nome: "Sabrina Moraes Cruz", empresa: "Agência Impulso", categoria: "Publicidade & Marketing > Serviços de Mídia", tel: "(11) 99100-0018"},
+        {nome: "Thiago Azevedo Pinto", empresa: "AZ Marcas e Patentes", categoria: "Jurídico & Contabilidade > Marcas e Patentes", tel: "(11) 99100-0019"},
+        {nome: "Ursula Fontes Magalhães", empresa: "Meta Interiores", categoria: "Arquitetura & Engenharia > Designer de Interiores", tel: "(11) 99100-0020"},
+        {nome: "Vinícius Esteves Borba", empresa: "VB Segurança Tech", categoria: "Segurança & Investigação > Sistemas Elétricos", tel: "(11) 99100-0021"},
+        {nome: "Wanderley Lira Neto", empresa: "Finance Flow", categoria: "Evento & Serviços > Serviços de Escritório", tel: "(11) 99100-0022"},
+        {nome: "Ximena Carvalho Duarte", empresa: "X Motors Veículos", categoria: "Carro & Motocicleta > Venda de Veículos", tel: "(11) 99100-0023"},
+        {nome: "Yago Pereira Luz", empresa: "ZFX Audiovisual & Web", categoria: "Computador & Programação > Softwares", tel: "(11) 99100-0024"},
+        {nome: "Zara Oliveira Monteiro", empresa: "LavaFácil Lavanderia", categoria: "Serviços Pessoais > Lavanderia", tel: "(11) 99100-0025"},
+        {nome: "André Lima Portela", empresa: "Pizzaria Central", categoria: "Comida & Bebida > Comida & Bebida (Outro)", tel: "(11) 99100-0026"},
+        {nome: "Beatriz Corrêa Senna", empresa: "AquaBlue Piscinas", categoria: "Construção > Piscinas, Spas & Saunas", tel: "(11) 99100-0027"},
+        {nome: "Caetano Fonseca Reis", empresa: "CF Advocacia Previdenciária", categoria: "Jurídico & Contabilidade > Direito Previdenciário", tel: "(11) 99100-0028"},
+        {nome: "Diana Uchoa Tavares", empresa: "Solar Prime Energia", categoria: "Construção > Serviços de Energia", tel: "(11) 99100-0029"},
+        {nome: "Emanuel Souza Britto", empresa: "KPF Engenharia e Perícia", categoria: "Segurança & Investigação > Segurança do Trabalho", tel: "(11) 99100-0030"},
+        {nome: "Fernanda Bastos Queiroz", empresa: "Gesso Premium Engenharia", categoria: "Construção > Construção (Outro)", tel: "(11) 99100-0031"},
+        {nome: "Guilherme Novaes Araújo", empresa: "GN Contabilidade", categoria: "Jurídico & Contabilidade > Contabilidade", tel: "(11) 99100-0032"},
+        {nome: "Ingrid Sampaio Gallo", empresa: "Clara Seguros", categoria: "Finanças & Seguros > Seguro de Vida", tel: "(11) 99100-0033"},
+        {nome: "Joaquim Vergara Dinis", empresa: "JV Imóveis", categoria: "Serviços Imobiliários > Corretor", tel: "(11) 99100-0034"},
+        {nome: "Karen Falcão Medeiros", empresa: "Portfell Consultoria", categoria: "Finanças & Seguros > Investimento", tel: "(11) 99100-0035"},
+        {nome: "Leandro Castelo Branco", empresa: "Vox2You Comunicação", categoria: "Treinamento & Coaching > Comunicação", tel: "(11) 99100-0036"},
+        {nome: "Mirela Santos Couto", empresa: "Hug Administração", categoria: "Serviços Imobiliários > Administração", tel: "(11) 99100-0037"},
+        {nome: "Nelson Abreu Figueiredo", empresa: "Terapia Bem Viver", categoria: "Saúde & Bem-estar > Médicos Complementares", tel: "(11) 99100-0038"},
+        {nome: "Olivia Drummond Peres", empresa: "Colheitas Restaurante", categoria: "Comida & Bebida > Comida & Bebida (Outro)", tel: "(11) 99100-0039"},
+        {nome: "Priscila Alencar Moura", empresa: "Priscila Moura Estética", categoria: "Serviços Pessoais > Beleza / Spa", tel: "(11) 99100-0040"},
+        {nome: "Quintino Leal Braga", empresa: "DayOff Aventuras", categoria: "Esportes & Lazer > Esportes & Lazer (Outro)", tel: "(11) 99100-0041"},
+        {nome: "Roberta Alves Guedes", empresa: "R.A. Ensino Profissional", categoria: "Treinamento & Coaching", tel: "(11) 99100-0042"},
+        {nome: "Saulo Mendonça Luz", empresa: "Profissional Liberal", categoria: "Saúde & Bem-estar > Psicólogo", tel: "-"},
+        {nome: "Tatiane Brum Vargas", empresa: "TB Filmes", categoria: "Publicidade & Marketing > Produção de Vídeos", tel: "(11) 99100-0043"},
+        {nome: "Ulisses Prado Ferraz", empresa: "Vitória Home Design", categoria: "Fabricação > Móveis", tel: "(11) 99100-0044"},
+        {nome: "Valentina Cruz Borges", empresa: "Baterias Power", categoria: "Carro & Motocicleta > Auto Peças", tel: "(11) 99100-0045"},
+        {nome: "Wagner Barros Diniz", empresa: "Fairy Tale Consultoria", categoria: "Consultoria > Consultor de Negócios", tel: "(11) 99100-0046"},
+        {nome: "Xavier Pereira Nunes", empresa: "DNX Tecnologia", categoria: "Computador & Programação", tel: "(11) 99100-0047"},
+        {nome: "Yasmin Teles Andrade", empresa: "Ademicon Consórcios", categoria: "Finanças & Seguros", tel: "(11) 99100-0048"},
+        {nome: "Zuleica Ramos Vidal", empresa: "ONG Comunidade Ativa", categoria: "Organizações > Captação de Recursos", tel: "(11) 99100-0049"}
+    ];
+
+    const tbody = document.getElementById('memberData');
+    membros.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><a href="#" class="member-name">${m.nome}</a></td>
+            <td>${m.empresa}</td>
+            <td>${m.categoria}</td>
+            <td class="col-tel">${m.tel}</td>
+            <td class="col-email" style="text-align: center;"><a href="mailto:contato@exemplo.com" class="email-icon">✉</a></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    function filtrar() {
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toUpperCase();
+        var table = document.getElementById("tabelaMembros");
+        var tr = table.getElementsByTagName("tr");
+        for (var i = 1; i < tr.length; i++) {
+            var content = tr[i].textContent || tr[i].innerText;
+            tr[i].style.display = content.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+</script>
+</body>
+</html>
