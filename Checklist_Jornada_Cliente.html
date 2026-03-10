@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkpoint — Jornada de Clientes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --bg-body: #111311;
+        --card-bg: #181a17;
+        --standard: #48f838;      /* Verde padrão */
+        --assessoria: #38bdf8;    /* Azul Ciano */
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+        --line-color: #395533;
+        --success: #10b981;
+        --modal-overlay: rgba(0, 0, 0, 0.85);
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        margin: 0;
+        padding: 40px 20px;
+        display: flex;
+        justify-content: center;
+        user-select: none;
+    }
+
+    .container { max-width: 800px; width: 100%; }
+
+    /* === HEADER === */
+    .header { text-align: center; margin-bottom: 50px; }
+    .header h1 { font-size: 28px; margin-bottom: 10px; background: linear-gradient(to right, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header p { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
+
+    /* === DASHBOARD / PROGRESS BAR === */
+    .dashboard-panel {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--line-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+
+    .progress-percentage {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+
+    .progress-track {
+        width: 100%;
+        height: 12px;
+        background: rgba(0,0,0,0.3);
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--standard), var(--assessoria));
+        border-radius: 6px;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 10px rgba(72, 248, 56, 0.3);
+    }
+
+    /* Muda a cor da barra dependendo do modo */
+    .mode-std .progress-fill { background: var(--standard); }
+    .mode-adv .progress-fill { background: var(--assessoria); }
+
+    /* === CONTROLES === */
+    .controls {
+        background: var(--card-bg); padding: 6px; border-radius: 12px;
+        display: inline-flex; gap: 8px; border: 1px solid var(--line-color);
+        flex-wrap: wrap; justify-content: center;
+    }
+
+    .btn-mode {
+        background: transparent; border: none; color: var(--text-muted);
+        padding: 10px 24px; border-radius: 8px; cursor: pointer;
+        font-weight: 600; font-size: 14px; transition: all 0.3s;
+    }
+
+    .btn-mode.active-std { background: rgba(62, 248, 56, 0.15); color: var(--standard); box-shadow: 0 0 10px rgba(78, 248, 56, 0.2); }
+    .btn-mode.active-adv { background: rgba(114, 203, 244, 0.15); color: var(--assessoria); box-shadow: 0 0 10px rgba(114, 225, 244, 0.2); }
+    
+    /* === TIMELINE === */
+    .timeline { position: relative; padding-left: 50px; margin-top: 50px; }
+    .timeline::before {
+        content: ''; position: absolute; left: 19px; top: 0; bottom: 0;
+        width: 2px; background: var(--line-color); z-index: 0;
+    }
+
+    .phase { margin-bottom: 40px; position: relative; transition: all 0.4s ease; }
+    .hidden { display: none !important; }
+
+    .phase-num {
+        position: absolute; left: -50px; top: 0;
+        width: 40px; height: 40px; border-radius: 50%;
+        background: var(--bg-body); border: 2px solid var(--line-color);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; color: var(--text-muted); z-index: 2;
+    }
+
+    .phase-content {
+        background: var(--card-bg); border: 1px solid var(--line-color);
+        border-radius: 16px; padding: 25px; position: relative;
+    }
+
+    .phase-title { margin: 0 0 5px 0; font-size: 18px; }
+    .phase-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; display: block; }
+
+    /* Cores das Fases */
+    .phase.std .phase-num { border-color: var(--standard); color: var(--standard); box-shadow: 0 0 15px rgba(78, 248, 56, 0.3); }
+    .phase.std .phase-content { border-top: 4px solid var(--standard); }
+    
+    .phase.adv .phase-num { border-color: var(--assessoria); color: var(--assessoria); box-shadow: 0 0 15px rgba(114, 218, 244, 0.3); }
+    .phase.adv .phase-content { border-top: 4px solid var(--assessoria); }
+
+    /* === CHECKLIST === */
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    
+    .check-item {
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); font-size: 14px;
+        display: flex; flex-direction: column;
+    }
+    
+    .item-row {
+        display: flex; align-items: center; gap: 10px; width: 100%; cursor: pointer;
+        min-height: 30px;
+    }
+
+    .checkbox {
+        width: 18px; height: 18px; border: 2px solid var(--line-color); border-radius: 4px;
+        flex-shrink: 0; transition: all 0.2s; position: relative;
+    }
+
+    .check-item.checked > .item-row { color: var(--text-main); }
+    .check-item.checked > .item-row .checkbox { background: var(--success); border-color: var(--success); }
+    .check-item.checked > .item-row .checkbox::after {
+        content: '✔'; font-size: 12px; color: black; position: absolute;
+        top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold;
+    }
+
+    /* Ícone de Abrir Modal */
+    .icon-open {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 24px; height: 24px; border-radius: 4px;
+        background: rgba(255,255,255,0.08); color: var(--text-muted);
+        font-size: 14px; cursor: pointer; border: 1px solid transparent;
+        transition: 0.2s; margin-right: 8px;
+    }
+    .icon-open:hover {
+        background: var(--standard); color: #000; border-color: var(--standard);
+    }
+    .phase.adv .icon-open:hover {
+        background: var(--assessoria); border-color: var(--assessoria);
+    }
+
+    /* Sub-listas (Escondidas na timeline, visíveis no modal) */
+    .sub-list {
+        display: none; /* Esconde na lista principal */
+        list-style: none; padding-left: 0; margin-top: 10px;
+    }
+
+    .tags-container { margin-top: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .tag { font-size: 11px; padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid var(--line-color); }
+    .tag.highlight { background: rgba(16, 185, 129, 0.1); color: var(--success); border-color: var(--success); }
+
+    /* === MODAL === */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: var(--modal-overlay); z-index: 1000;
+        display: none; justify-content: center; align-items: center;
+        backdrop-filter: blur(5px);
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal-content {
+        background: var(--card-bg); border: 1px solid var(--line-color);
+        width: 90%; max-width: 600px; max-height: 85vh;
+        border-radius: 12px; padding: 30px;
+        position: relative; overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+    .modal-title { margin: 0; font-size: 20px; color: var(--standard); font-weight: 700; }
+    .phase.adv .modal-title { color: var(--assessoria); }
+
+    .close-modal { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; line-height: 1; }
+    
+    /* Estilo da lista DENTRO do modal */
+    .modal-body .sub-list { display: block !important; } /* Força aparecer */
+    .modal-body .check-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 15px 0; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Status Report: Jornada de Clientes</h1>
+        <p>Acompanhamento de fases e entregáveis do projeto</p>
+        
+        <div class="controls">
+            <button class="btn-mode active-std" onclick="setMode('standard')" id="btn-std">Jornada Padrão</button>
+            <button class="btn-mode" onclick="setMode('advisory')" id="btn-adv">Assessoria de Novo Produto</button>
+        </div>
+    </div>
+
+    <div class="dashboard-panel">
+        <div class="progress-header">
+            <span>Progresso Geral</span>
+            <span id="progress-text">0 de 0 tarefas</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div class="progress-percentage" id="progressPercent">0%</div>
+    </div>
+
+    <div class="timeline">
+
+        <div class="phase std" id="p1">
+            <div class="phase-num">01</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 1: Setup & Kickoff</h3>
+                <span class="phase-subtitle">Definição do time e materiais iniciais.</span>
+                
+                <ul class="checklist">
+                    <li class="check-item no-sub" onclick="toggleCheck(this)">
+                        <div class="item-row"><div class="checkbox"></div>Definição do Squad</div>
+                    </li>
+                    <li class="check-item no-sub" onclick="toggleCheck(this)">
+                        <div class="item-row"><div class="checkbox"></div>Produção de material específico do cliente</div>
+                    </li>
+                    <li class="check-item no-sub" onclick="toggleCheck(this)">
+                        <div class="item-row"><div class="checkbox"></div>Envio para a gráfica</div>
+                    </li>
+                    
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-kickoff', 'Kick-off Meeting')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Kick-off Meeting (Ver Detalhes)</span>
+                        </div>
+                        <ul id="sub-kickoff" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Apresentação do Manual de Execução</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Apresentação do squad</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-diag', 'Etapa de diagnóstico')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Etapa de diagnóstico (Ver Detalhes)</span>
+                        </div>
+                        <ul id="sub-diag" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Reuniões semanais de levantamento de requisitos</div></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="tags-container"><span class="tag highlight">Jornada Fase 1</span></div>
+            </div>
+        </div>
+
+        <div class="phase std" id="p2-std">
+            <div class="phase-num">02</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 2: Levantamento de Requisitos</h3>
+                <span class="phase-subtitle">Entendimento do cenário atual para implantação.</span>
+
+                <ul class="checklist">     
+                    <li class="check-item no-sub" onclick="toggleCheck(this)">
+                        <div class="item-row"><div class="checkbox"></div>Mapeamento de acordo com o modelo</div>
+                    </li>
+
+                    <li class="check-item no-sub" onclick="toggleCheck(this)">
+                        <div class="item-row"><div class="checkbox"></div>Definição de acordo com a missão e visão do produto</div>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-requisitos', 'Documentação de requisitos')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Documentação de requisitos</span>
+                        </div>
+                        <ul id="sub-requisitos" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Elaborar documento de escopo</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Validar com o cliente</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Aprovação e assinatura</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-cronograma', 'Cronograma do projeto')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Cronograma do projeto</span>
+                        </div>
+                        <ul id="sub-cronograma" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir datas e marcos</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir responsáveis por etapa</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Compartilhar com o cliente</div></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="phase std" id="p3-std">
+            <div class="phase-num">03</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 3: Implantação</h3>
+                <span class="phase-subtitle">Configuração e parametrização do sistema.</span>
+
+                <ul class="checklist">
+                    <li class="check-item no-sub" onclick="toggleCheck(this)">
+                        <div class="item-row"><div class="checkbox"></div>Criação da rede e usuário inicial</div>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-perfis', 'Perfis e permissões')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Perfis e permissões</span>
+                        </div>
+                        <ul id="sub-perfis" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Configurar perfil Admin</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Configurar perfil Colaborador</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Validar permissões com o cliente</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-visual', 'Personalização visual')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Personalização visual</span>
+                        </div>
+                        <ul id="sub-visual" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Aplicar logo do cliente</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Configurar cores e white label</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Validação visual com o cliente</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-conteudo', 'Cadastro de conteúdo inicial')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Cadastro de conteúdo inicial</span>
+                        </div>
+                        <ul id="sub-conteudo" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Cadastrar banners</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Cadastrar comunicados</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Cadastrar departamentos e usuários</div></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="tags-container"><span class="tag highlight">Jornada Fase 3</span></div>
+            </div>
+        </div>
+
+        <div class="phase std" id="p4-std">
+            <div class="phase-num">04</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 4: Treinamento</h3>
+                <span class="phase-subtitle">Capacitação dos usuários para uso do sistema.</span>
+
+                <ul class="checklist">
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-planej-treino', 'Planejamento dos treinamentos')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Planejamento dos treinamentos</span>
+                        </div>
+                        <ul id="sub-planej-treino" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir cronograma de sessões</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir participantes por módulo</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Enviar convites e confirmações</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-exec-treino', 'Execução dos treinamentos')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Execução dos treinamentos</span>
+                        </div>
+                        <ul id="sub-exec-treino" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Treinamento de administradores</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Treinamento de colaboradores</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Registro de lista de presença</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Coleta de dúvidas e feedback</div></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="tags-container"><span class="tag highlight">Jornada Fase 4</span></div>
+            </div>
+        </div>
+
+        <div class="phase std" id="p5-std">
+            <div class="phase-num">05</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 5: Go-live & Encerramento</h3>
+                <span class="phase-subtitle">Virada para produção e encerramento formal do projeto.</span>
+
+                <ul class="checklist">
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-golive', 'Plano de go-live')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Plano de go-live</span>
+                        </div>
+                        <ul id="sub-golive" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Validar ambiente de homologação</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir data e responsável pela virada</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Plano de contingência aprovado</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-hypercare', 'HyperCare')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">HyperCare</span>
+                        </div>
+                        <ul id="sub-hypercare" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir SLA de suporte pós-virada</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Acompanhamento das primeiras semanas</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Registro de ocorrências e ajustes</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-encerramento', 'Encerramento do projeto')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Encerramento do projeto</span>
+                        </div>
+                        <ul id="sub-encerramento" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Documento de encerramento assinado</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Reunião de lições aprendidas</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Passagem para o time de suporte</div></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="tags-container"><span class="tag highlight">Jornada Fase 5</span></div>
+            </div>
+        </div>
+
+        <div class="phase adv hidden" id="p2-adv-1">
+            <div class="phase-num">02</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 2: Definição do Produto</h3>
+                <span class="phase-subtitle">Construção da identidade.</span>
+                <ul class="checklist">
+                    
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-carta1', 'Carta de valores 1')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Carta de valores 1</span>
+                        </div>
+                        <ul id="sub-carta1" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Missão, visão e valores</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Nome da ferramenta</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-carta2', 'Carta de valores 2')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Carta de valores 2</span>
+                        </div>
+                        <ul id="sub-carta2" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Confirmação do nome, cores, logo e arquétipos</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-func1', 'Funcionalidades 1')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Funcionalidades 1</span>
+                        </div>
+                        <ul id="sub-func1" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Levantamento dos recursos existentes</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Apresentação dos recursos existentes</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Início da definição dos recursos</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-func2', 'Funcionalidades 2')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Funcionalidades 2</span>
+                        </div>
+                        <ul id="sub-func2" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Finalização da definição dos recursos</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Início do protótipo</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-jornada', 'Jornada do produto')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Jornada do produto</span>
+                        </div>
+                        <ul id="sub-jornada" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definição dos perfis</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Jornada do usuário por perfil</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Finalização do protótipo</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-layout', 'Aprovação do layout')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Aprovação do layout</span>
+                        </div>
+                        <ul id="sub-layout" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Ajustes do protótipo</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Envio do protótipo ajustado</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-rede', 'Criação da rede')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Criação da rede</span>
+                        </div>
+                        <ul id="sub-rede" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definição da estrutura da rede</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-comercial', 'Modelos de comercialização')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Modelos de comercialização</span>
+                        </div>
+                        <ul id="sub-comercial" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definição de custos e formatos</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Cálculos de ROI</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-comportamento', 'Comportamento do produto')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Comportamento do produto</span>
+                        </div>
+                        <ul id="sub-comportamento" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Mensagem externa e interna</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Planos de mitigação</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Responsabilidades operacionais</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Lições aprendidas</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-doc', 'Aprovação do documento')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Aprovação do documento</span>
+                        </div>
+                        <ul id="sub-doc" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Assinatura</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-dev', 'Documentação de desenvolvimento')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Documentação de desenvolvimento</span>
+                        </div>
+                        <ul id="sub-dev" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Elaborar a documentação</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Criação dos PBIs</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Criação das tasks e orçamentos</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Cronograma</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definição dos checkpoints quinzenais</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-implantacao', 'Implantação dos sistemas atuais')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Implantação dos sistemas atuais</span>
+                        </div>
+                        <ul id="sub-implantacao" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Everest Standard</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Everest específicos</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-comunicacao', 'Plano de comunicação')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Plano de comunicação</span>
+                        </div>
+                        <ul id="sub-comunicacao" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir com antecedência</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir o público</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-lancamento', 'Lançamento do produto')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Lançamento do produto</span>
+                        </div>
+                        <ul id="sub-lancamento" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Definir datas e prazos</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Checar cadastros de clientes</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Checar cadastros de produtos</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Checar impacto nos outros projetos</div></li>
+                        </ul>
+                    </li>
+                    
+                </ul>
+            </div>
+        </div>
+
+        <div class="phase adv hidden" id="p3-adv">
+            <div class="phase-num">03</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 3: Desenvolvimento</h3>
+                <span class="phase-subtitle">Construção e validação do produto.</span>
+
+                <ul class="checklist">
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-adv-sprint', 'Sprints de desenvolvimento')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Sprints de desenvolvimento</span>
+                        </div>
+                        <ul id="sub-adv-sprint" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Criação dos PBIs e tasks</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Revisões quinzenais com o cliente</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Ajustes de escopo documentados</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-adv-homolog', 'Homologação')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Homologação</span>
+                        </div>
+                        <ul id="sub-adv-homolog" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Ambiente de homologação configurado</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Testes realizados com o cliente</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Aprovação formal do cliente</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-adv-treino', 'Treinamento da equipe')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Treinamento da equipe</span>
+                        </div>
+                        <ul id="sub-adv-treino" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Treinamento de administradores</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Treinamento de usuários finais</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Material de apoio entregue</div></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="tags-container"><span class="tag highlight">Assessoria Fase 3</span></div>
+            </div>
+        </div>
+
+        <div class="phase adv hidden" id="p4-adv">
+            <div class="phase-num">04</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 4: Lançamento</h3>
+                <span class="phase-subtitle">Go-live e virada para o ambiente de produção.</span>
+
+                <ul class="checklist">
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-adv-golive', 'Plano de go-live')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Plano de go-live</span>
+                        </div>
+                        <ul id="sub-adv-golive" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Data de virada definida e comunicada</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Plano de contingência aprovado</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Equipe de plantão definida</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-adv-comun', 'Comunicação de lançamento')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Comunicação de lançamento</span>
+                        </div>
+                        <ul id="sub-adv-comun" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Comunicado interno enviado</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Materiais de divulgação publicados</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Canal de suporte divulgado</div></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="tags-container"><span class="tag highlight">Assessoria Fase 4</span></div>
+            </div>
+        </div>
+
+        <div class="phase adv hidden" id="p5-adv">
+            <div class="phase-num">05</div>
+            <div class="phase-content">
+                <h3 class="phase-title">Fase 5: Pós-lançamento</h3>
+                <span class="phase-subtitle">Acompanhamento, ajustes e encerramento formal.</span>
+
+                <ul class="checklist">
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-adv-hypercare', 'HyperCare')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">HyperCare</span>
+                        </div>
+                        <ul id="sub-adv-hypercare" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Reuniões de acompanhamento semanais</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Registro e resolução de ocorrências</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Coleta de feedback dos usuários</div></li>
+                        </ul>
+                    </li>
+
+                    <li class="check-item">
+                        <div class="item-row">
+                            <button class="icon-open" onclick="openModal(event, 'sub-adv-encerr', 'Encerramento')" title="Abrir Detalhes">↗</button>
+                            <div class="checkbox" onclick="toggleCheck(this.parentElement.parentElement)"></div>
+                            <span onclick="toggleCheck(this.parentElement.parentElement)">Encerramento</span>
+                        </div>
+                        <ul id="sub-adv-encerr" class="sub-list">
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Documento de encerramento assinado</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Reunião de lições aprendidas</div></li>
+                            <li class="check-item" onclick="toggleCheck(this)"><div class="item-row"><div class="checkbox"></div>Passagem para o time de suporte</div></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="tags-container"><span class="tag highlight">Assessoria Fase 5</span></div>
+            </div>
+        </div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modalTitle">Detalhes</h3>
+            <button class="close-modal" onclick="closeModalDirect()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+    // VARIAVEIS GLOBAIS PARA O "DOM PORTAL"
+    let currentMovedElement = null;
+    let originalParent = null;
+
+    // --- INICIALIZAÇÃO ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Gera IDs únicos para TODOS os items (Fundamental para salvar)
+        generateUniqueIDs();
+        
+        // 2. Carrega o que já foi salvo
+        loadProgress();
+
+        // 3. Recupera o modo (Padrão ou Assessoria)
+        const savedMode = localStorage.getItem('dnxMode');
+        if (savedMode) setMode(savedMode);
+    });
+
+    // Gera ID único para cada checkbox
+    function generateUniqueIDs() {
+        const allItems = document.querySelectorAll('.check-item');
+        allItems.forEach((item, index) => {
+            if (!item.hasAttribute('data-id')) {
+                item.setAttribute('data-id', `chk-${index}`);
+            }
+        });
+    }
+
+    // --- LÓGICA DO MODAL ---
+    function openModal(event, contentId, title) {
+        event.stopPropagation(); // Não marca o check do pai
+
+        // Se já tem algo aberto, fecha direito antes
+        if (currentMovedElement) closeModalDirect();
+
+        const content = document.getElementById(contentId);
+        const modalBody = document.getElementById('modalBody');
+        const modalTitle = document.getElementById('modalTitle');
+        const modal = document.getElementById('modalOverlay');
+
+        if (!content) return;
+
+        // Salva onde o elemento estava
+        originalParent = content.parentElement;
+        currentMovedElement = content;
+
+        // MOVE o elemento para o modal (preserva estado)
+        modalBody.appendChild(content);
+
+        // Atualiza título e mostra
+        modalTitle.innerText = title || 'Detalhes';
+        modal.style.display = 'flex';
+    }
+
+    function closeModalDirect() {
+        const modal = document.getElementById('modalOverlay');
+        
+        // DEVOLVE o elemento para o lugar de origem
+        if (currentMovedElement && originalParent) {
+            originalParent.appendChild(currentMovedElement);
+        }
+
+        // Limpa referências
+        currentMovedElement = null;
+        originalParent = null;
+        modal.style.display = 'none';
+    }
+
+    function closeModal(event) {
+        if (event.target.id === 'modalOverlay') {
+            closeModalDirect();
+        }
+    }
+
+    // --- LÓGICA DE CHECKBOX ---
+    function toggleCheck(element) {
+        if (window.event) window.event.stopPropagation();
+        element.classList.toggle('checked');
+        saveProgress();
+    }
+
+    // --- SALVAMENTO ROBUSTO ---
+    function saveProgress() {
+        const checkedItems = document.querySelectorAll('.check-item.checked');
+        const checkedIDs = [];
+
+        checkedItems.forEach(item => {
+            const id = item.getAttribute('data-id');
+            if (id) checkedIDs.push(id);
+        });
+
+        localStorage.setItem('dnxProgressID', JSON.stringify(checkedIDs));
+    }
+
+    function loadProgress() {
+        const savedData = JSON.parse(localStorage.getItem('dnxProgressID'));
+        if (savedData) {
+            savedData.forEach(id => {
+                const item = document.querySelector(`.check-item[data-id="${id}"]`);
+                if (item) item.classList.add('checked');
+            });
+        }
+    }
+
+    // --- MODOS ---
+    function setMode(mode) {
+        const btnStd = document.getElementById('btn-std');
+        const btnAdv = document.getElementById('btn-adv');
+        const p1 = document.getElementById('p1');
+        const p2Std = document.getElementById('p2-std');
+        const p3Std = document.getElementById('p3-std');
+        const p4Std = document.getElementById('p4-std');
+        const p5Std = document.getElementById('p5-std');
+        const p2Adv = document.getElementById('p2-adv-1');
+        const p3Adv = document.getElementById('p3-adv');
+        const p4Adv = document.getElementById('p4-adv');
+        const p5Adv = document.getElementById('p5-adv');
+        
+        localStorage.setItem('dnxMode', mode);
+        btnStd.className = 'btn-mode';
+        btnAdv.className = 'btn-mode';
+        
+        [p2Std, p3Std, p4Std, p5Std, p2Adv, p3Adv, p4Adv, p5Adv].forEach(el => el.classList.add('hidden'));
+
+        if (mode === 'standard') {
+            btnStd.classList.add('active-std');
+            p1.classList.remove('adv');
+            p1.classList.add('std');
+            [p2Std, p3Std, p4Std, p5Std].forEach(el => el.classList.remove('hidden'));
+        } else {
+            btnAdv.classList.add('active-adv');
+            p1.classList.remove('std');
+            p1.classList.add('adv');
+            [p2Adv, p3Adv, p4Adv, p5Adv].forEach(el => el.classList.remove('hidden'));
+        }
+    }
+
+    function updateDashboard() {
+        const allChecks = document.querySelectorAll('.check-item');
+        let total = 0;
+        let checked = 0;
+
+        allChecks.forEach(item => {
+            // Verifica se o item está dentro de uma fase oculta
+            const parentPhase = item.closest('.phase');
+            if (parentPhase && !parentPhase.classList.contains('hidden')) {
+                total++;
+                if (item.classList.contains('checked')) {
+                    checked++;
+                }
+            }
+        });
+
+        // Evita divisão por zero
+        const percent = total === 0 ? 0 : Math.round((checked / total) * 100);
+
+        // Atualiza na tela
+        document.getElementById('progressBar').style.width = `${percent}%`;
+        document.getElementById('progressPercent').innerText = `${percent}%`;
+        document.getElementById('progress-text').innerText = `${checked} de ${total} entregáveis`;
+    }
+</script>
+
+</body>
+</html>
